@@ -1,7 +1,7 @@
 import 'dart:io';
-
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:studentform/functions/db_function.dart';
+import 'package:studentform/providers/student_provider.dart';
 import 'package:studentform/screens/add_student.dart';
 import 'package:studentform/screens/editstd_screen.dart';
 import 'package:studentform/screens/profile.dart';
@@ -12,11 +12,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    getstudent();
+    final studentprovider = Provider.of<StudentProvider>(context);
+    studentprovider.getstudent();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Student Form'),
         centerTitle: true,
+        leading: const Icon(Icons.menu),
         actions: [
           IconButton(
               onPressed: () {
@@ -36,81 +38,94 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(top: 10),
-          child: ValueListenableBuilder(
-              valueListenable: students,
-              builder: (context, studentlist, child) {
-                return ListView.separated(
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        onTap: () {
-                          Navigator.of(context)
-                              .push(MaterialPageRoute(builder: (ctx) {
-                            return Profilescreen(
-                              index: index,
-                            );
-                          }));
-                        },
-                        leading: CircleAvatar(
-                          radius: 40,
-                          backgroundImage:
-                              FileImage(File(studentlist[index].profile!)),
-                        ),
-                        title: Text(studentlist[index].name!,
-                            style: const TextStyle(fontSize: 20)),
-                        trailing: FittedBox(
-                          child: Row(
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .push(MaterialPageRoute(builder: (ctx) {
-                                    return EditStudent(index: index);
-                                  }));
-                                },
-                                icon: const Icon(Icons.edit_note),
-                                color: Colors.grey,
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  showalert(context, index);
-                                },
-                                icon: const Icon(Icons.delete_sweep),
-                                color: Colors.red,
-                              )
-                            ],
+          child: Consumer<StudentProvider>(
+            builder: (context, value, child) => ListView.separated(
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    onTap: () {
+                      Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (ctx) {
+                        return Profilescreen(
+                          index: index,
+                        );
+                      }));
+                    },
+                    leading: CircleAvatar(
+                      radius: 40,
+                      backgroundImage:
+                          FileImage(File(value.studentio[index].profile!)),
+                    ),
+                    title: Text(value.studentio[index].name!,
+                        style: const TextStyle(fontSize: 20)),
+                    trailing: FittedBox(
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              Navigator.of(context)
+                                  .push(MaterialPageRoute(builder: (ctx) {
+                                return EditStudent(index: index);
+                              }));
+                            },
+                            icon: const Icon(Icons.edit_note),
+                            color: Colors.grey,
                           ),
-                        ),
-                      );
-                    },
-                    separatorBuilder: (context, index) {
-                      return const Divider();
-                    },
-                    itemCount: students.value.length);
-              }),
+                          IconButton(
+                            onPressed: () {
+                              showalert(context, index);
+                            },
+                            icon: const Icon(Icons.delete_sweep),
+                            color: Colors.red,
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  return const Divider();
+                },
+                itemCount: value.studentio.length),
+          ),
         ),
       ),
     );
   }
 
   void showalert(BuildContext context, int index) {
+    final value = Provider.of<StudentProvider>(context, listen: false);
     showDialog(
         context: context,
         builder: (ctx) {
           return AlertDialog(
-            title: Text('delete ${students.value[index].name}'),
+            title: Text(
+              'delete ${value.studentio[index].name}',
+              style: const TextStyle(fontSize: 25),
+            ),
             content: const Text('all the related datas will clear '),
             actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text('no')),
-              TextButton(
-                  onPressed: () {
-                    deletestudent(index);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('yes'))
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                      },
+                      child: const Text(
+                        'no',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      )),
+                  TextButton(
+                      onPressed: () {
+                        value.deletestudent(index);
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('yes',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold)))
+                ],
+              ),
             ],
           );
         });
